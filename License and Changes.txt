@@ -1,0 +1,64 @@
+Last Updated: 23 February 2021
+by Djordje Mandic https://github.com/DjordjeMandic https://youtube.com/c/ncky
+
+Universal IR Blaster TV-B-Gone V1.4:
+
+All other changes will be in changelog somewhere in this project(will be updated)
+Default region customisable in main.h
+Added few custom codes
+Moved EU and NA ir code pointer arrays to respective header files
+EEPROM map for Universal IR Blaster V0.2 board added (MAP MUST NOT CHANGE BETWEEN VERSIONS OR BACKWARDS COMPABILITY IS RUINED)
+AVcc and IPROG can be measured
+delay_ten_us has been changed to use builtin func to delay cycles
+Region selection resistor is now a dummy resistor thats currently only used for delay_ten_us calibration during development
+Region selection is done in code and eeprom
+Multiple 'users' added. They act like regions
+WDT protection for IR diodes
+Sleep mode can be disabled
+Codes are decompressed into ram before emmiting for better timing accuraccy
+Added 3 aditional buttons for user input and one pin dedicated to gpio of usb serial converter
+Added Serial communication with user for control and information gathering
+Firmware only compatibale with Universal IR Blaster V0.2 board
+Changed actual use of firmware for Universal IR Blaster V0.2 board
+Ported to Universal IR Blaster V0.2 Board
+
+
+by Djordje Mandic https://github.com/DjordjeMandic https://youtube.com/c/ncky
+-----------------------------------------------------------------------------
+
+Changed only circuit section..
+
+------------------------------------------------------------  
+Semver (http://semver.org/) VERSION HISTORY (newest on top):  
+(date format: yyyymmdd; ex: 20161022 is 22 Oct. 2016)  
+------------------------------------------------------------  
+ - 20210223 - v1.4 - Ported to Universal IR Blaster by Djordje Mandic, changes will be above
+ - 20161022 - v1.3 - Semver versioning implemented; various code updates, clarifications, & comment additions, and changes to fix PROGMEM incompatibilities so it will now compile with latest versions of gcc compiler; also improved blink indicator routines & added the ability to stop the code-sending sequence once it has begun; by Gabriel Staples (http://www.ElectricRCAircraftGuy.com)  
+ - 20101023 - v1.2 - Latest version posted by Ken Shirriff on his website here (http://www.righto.com/2010/11/improved-arduino-tv-b-gone.html) (direct download link here: http://arcfn.com/files/arduino-tv-b-gone-1.2.zip)  
+ - 20101018 - v1.2 - Universality for EU (European Union) & NA (North America) added by Mitch Altman; sleep mode added by ka1kjz  
+ - 2010____ - v1.2 - code ported to Arduino; by Ken Shirriff  
+ - 20090816 - v1.2 - for ATtiny85v, by Mitch Altman & Limor Fried (https://www.adafruit.com/), w/some code by Kevin Timmerman & Damien Good  
+TV-B-Gone for Arduino version 1.2, Oct 23 2010
+Ported to Arduino by Ken Shirriff
+See here: http://www.arcfn.com/2009/12/tv-b-gone-for-arduino.html and here: http://www.righto.com/2010/11/improved-arduino-tv-b-gone.html (newer)
+I added universality for EU (European Union) or NA (North America),
+and Sleep mode to Ken's Arduino port
+ -- Mitch Altman  18-Oct-2010
+Thanks to ka1kjz for the code for adding Sleep
+ <http://www.ka1kjz.com/561/adding-sleep-to-tv-b-gone-code/>
+ 
+The original code is:
+TV-B-Gone Firmware version 1.2
+ for use with ATtiny85v and v1.2 hardware
+ (c) Mitch Altman + Limor Fried 2009
+ Last edits, August 16 2009
+With some code from:
+Kevin Timmerman & Damien Good 7-Dec-07
+------------------------------------------------------------
+CIRCUIT:
+------------------------------------------------------------
+Only for Universal IR Blaster V0.2 board.
+------------------------------------------------------------
+LICENSE:
+------------------------------------------------------------
+Distributed under Creative Commons 2.5 -- Attribution & Share Alike
