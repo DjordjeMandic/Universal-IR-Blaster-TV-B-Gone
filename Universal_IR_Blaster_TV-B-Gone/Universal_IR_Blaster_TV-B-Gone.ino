@@ -30,6 +30,10 @@
 #include <avr/wdt.h>
 #include <EEPROM.h>
 
+#include "libraries/PalatisSoftPWM.h"
+SOFTPWM_DEFINE_PIN13_CHANNEL(0);  //Configure Arduino pin 13 as PWM channel 0
+SOFTPWM_DEFINE_OBJECT(1);
+
 //eeprom addresses and lenghts
 int Serial_Number = -1;
 #define INFO_SERIAL_NUMBER_EEPROM_ADDR 0
@@ -59,6 +63,14 @@ unsigned long NumberOfStarts = 0UL;
 #define INFO_NUMBER_OF_STARTS_ADDR INFO_NUMBER_OF_BOOTS_ADDR + INFO_NUMBER_OF_BOOTS_LEN
 #define INFO_NUMBER_OF_STARTS_LEN sizeof(NumberOfStarts)
 
+byte STAT_LED_PWM_Brightness = 255;
+#define INFO_STAT_PWM_BRIGHTNESS_ADDR INFO_NUMBER_OF_STARTS_ADDR + INFO_NUMBER_OF_STARTS_LEN
+#define INFO_STAT_PWM_BRIGHTNESS_LEN sizeof(STAT_LED_PWM_Brightness)
+
+String USBSerialNumber = "ERR";
+#define INFO_USB_SERIAL_NUMBER_ADDR INFO_STAT_PWM_BRIGHTNESS_ADDR + INFO_STAT_PWM_BRIGHTNESS_LEN
+#define INFO_USB_SERIAL_NUMBER_LEN 8 //8 characters
+
 #define BAT_LOW_VOLTAGE 3450 //empty battery threshold voltage in mV
 #define IPROG_RESISTOR 4990 //value of IPROG resistor used to set charging current in ohms
 
@@ -66,7 +78,6 @@ unsigned long NumberOfStarts = 0UL;
 
 //number of slow flashes for stat led
 #define FLASH_SLOW_WARNING 1
-#define FLASH_SLOW_LOW_BAT 2
 #define FLASH_SLOW_NO_CODES 3
 
 //number of quick flashes for stat led
@@ -76,8 +87,9 @@ unsigned long NumberOfStarts = 0UL;
 
 #define DEVELOPMENT 0 // if 1 then just timings are printed out and no code is actually transmitted
 //#define DISABLE_DEBUG_SAVE_SPACE // uncomment this if you want to disable few debug messages if youre low on flash
-#define FIRMWARE_VERSION_STR "1.4" // string firmware version 
+#define FIRMWARE_VERSION_STR "1.5" // string firmware version 
 #define HARDWARE_VERSION_CMP 0.2 // double hardware version x.x thats checked againt value stored in eeprom
+#define SERIAL_BAUD_RATE 1000000
 
 #define SizeOfTimingPairsBuffer 512 // max value of numpairs in ircode * 2 because we have 2 values per pair
 
@@ -96,7 +108,7 @@ extern uint8_t num_NAcodes, num_EUcodes, num_User1Codes, num_User2Codes, num_Use
 
 volatile uint16_t TimingPairsBuffer[256][2];
 
-byte SelectedUser = 0;
+byte SelectedUser = 1;
 
 uint8_t bitsleft_r = 0;
 uint8_t bits_r=0;
@@ -120,6 +132,7 @@ bool DCommand = false;
 bool ICommand = false;
 bool QCommand = false;
 bool NCommand = false;
+bool PCommand = false;
 
 int NumOfCodes = -1;
 
@@ -132,11 +145,12 @@ unsigned long TransmissionTime = 0;
 */
 void setup() {
   ReadFromEEPROM();
-  EEPROM.put(INFO_NUMBER_OF_BOOTS_ADDR, ++NumberOfBoots);
   
   //if hardware version defined in software does not match hardware version stored in eeprom then do a WDT reset
-  if(HardwareVersion != HARDWARE_VERSION_CMP) { wdt_enable(WDTO_15MS); while(1); } // if hardware version does not match restart to prevent damage to hardware
+  if(HardwareVersion != HARDWARE_VERSION_CMP) { wdt_enable(WDTO_2S); while(1); } // if hardware version does not match restart to prevent damage to hardware
   
+  EEPROM.update(INFO_NUMBER_OF_BOOTS_ADDR, ++NumberOfBoots);
+
   digitalWrite(IR_SIG, LOW); pinMode(IR_SIG, OUTPUT);
   pinMode(USB_IO3, INPUT_PULLUP);
   pinMode(OPTION_SW1, INPUT_PULLUP);
@@ -155,18 +169,20 @@ void setup() {
   PORTD &= ~_BV(PORTD5);
   digitalWrite(PULLDOWN_RESISTOR, LOW); pinMode(PULLDOWN_RESISTOR, INPUT);
 
-  //reset timer2 and disable wdt
+  //reset timer2, start softpwm and disable wdt
   TCCR2A = 0;
   TCCR2B = 0;
   wdt_disable();
+  PalatisSoftPWM.begin(60);
 
   //region from eeprom, we should try not to change boot variables in code unless were reading it from eeprom
   Region = Boot_Region;
   
-  Serial.begin(115200);
+  Serial.begin(SERIAL_BAUD_RATE);
+  Serial.setTimeout(200);
 
-  //check if option sw1 is held while booting and if yes then enable debug and set debug override flag to true if not then set debug to state from eeprom
-  if(digitalRead(OPTION_SW1) == 0)
+  //check if option sw2 is held while booting and if yes then enable debug and set debug override flag to true if not then set debug to state from eeprom
+  if(digitalRead(OPTION_SW2) == 0)
   {
     Debug_EN = true;
     Debug_Override = true;
@@ -192,7 +208,7 @@ void setup() {
                                       break;
   }
   
-  SelectedUser = 0; // default region codes
+  SelectedUser = 1; // default User1 codes
   NumOfCodes = Region ? num_EUcodes : num_NAcodes;
 
   //if cp2104 gpio3 is held low while booting then enable sleep override
@@ -203,11 +219,11 @@ void setup() {
     if(Debug_EN) Serial.println(F("[DBG]: Manual Sleep Override Via USB Enabled"));
   }
 
-  //if option sw2 is held while booting then enable sleep override
-  if(digitalRead(OPTION_SW2) == 0)
+  //if option sw1 is held while booting then enable sleep override
+  if(digitalRead(OPTION_SW1) == 0)
   {
     SleepOverride = true;
-    if(Debug_EN) Serial.println(F("[DBG]: Manual Sleep Override Via [Option 2] Switch Enabled"));
+    if(Debug_EN) Serial.println(F("[DBG]: Manual Sleep Override Via [Option 1] Switch Enabled"));
   }
 
   ShowInfo();
@@ -238,11 +254,14 @@ void loop() {
 
   //flash every SLEEP_OVERRIDE_BLINK_DELAY_MS if sleep is overriden
   unsigned long currentMillis = millis();
-  if ((currentMillis - previousMillis >= SLEEP_OVERRIDE_BLINK_DELAY_MS) && SleepOverride) {
+  if ((currentMillis - previousMillis >= SLEEP_OVERRIDE_BLINK_DELAY_MS) && SleepOverride && !Low_Battery) {
     previousMillis = currentMillis;
-    digitalWrite(STAT_LED, HIGH);
+    //digitalWrite(STAT_LED, HIGH);
+    PalatisSoftPWM.set(0, STAT_LED_PWM_Brightness);
   }
   delay(100);
+  PalatisSoftPWM.set(0, 0);
+  delay(10);
   digitalWrite(STAT_LED, LOW);
 
   if(SleepOverride)
@@ -282,6 +301,10 @@ void loop() {
       case 'N':
       PrintDBG(F("Ncmd=1"));
       NCommand = true; break;
+
+      case 'P':
+      PrintDBG(F("Pcmd=1"));
+      PCommand = true; break;
       
       case '0': 
       SelectedUser = 0; Serial.println(F("Selected default region codes")); break;
@@ -325,8 +348,28 @@ void loop() {
       Boot_Debug_EN = true;
     }
     Serial.println(F("Saving debug mode in EEPROM"));
-    EEPROM.put(INFO_DEBUG_ENABLED_EEPROM_ADDR, Boot_Debug_EN);
+    EEPROM.update(INFO_DEBUG_ENABLED_EEPROM_ADDR, Boot_Debug_EN);
     Serial.println(F("Debug mode saved"));
+  }
+
+  if(PCommand)
+  {
+    PCommand = false;
+    Serial.print(F("STAT LED PWM is currently ")); Serial.println(STAT_LED_PWM_Brightness, DEC);
+    Serial.println(F("To update enter [1-255], to exit enter anything else: "));
+    SerialFlush();
+    while(Serial.available() == 0) wdt_reset();
+    delay(100);
+    int parsedPWM = Serial.parseInt(SKIP_NONE);
+    if(parsedPWM >= 1 && parsedPWM <= 255)
+    {
+      EEPROM.update(INFO_STAT_PWM_BRIGHTNESS_ADDR, (byte)parsedPWM);
+    }
+    
+    EEPROM.get(INFO_STAT_PWM_BRIGHTNESS_ADDR, STAT_LED_PWM_Brightness);
+    Serial.print(F("Set to: ")); Serial.println(STAT_LED_PWM_Brightness, DEC);
+    Serial.println();
+    SerialFlush();
   }
 
   if(ICommand)
@@ -351,11 +394,11 @@ void loop() {
       if(Debug_EN) { Serial.print(F("[DBG]: Selecting user codes, optionSW = 0b")); Serial.println(optionSW, BIN); }
       switch(optionSW)
       {
-        case 0b011: SelectedUser = 1; Serial.println(F("[Option 1] User1 selected")); break;
-        case 0b110: SelectedUser = 2; Serial.println(F("[Option 2] User2 selected")); break;
-        case 0b000: SelectedUser = 3; Serial.println(F("[Option 1+2+3] User3 selected")); break;
-        case 0b111: SelectedUser = 0; Serial.println(F("No option selected, Selected default region")); break;
-        default: SelectedUser = 0; flashslowLEDx(FLASH_SLOW_WARNING); Serial.println(F("Unconfigured option, default region selected and aborting transmission..")); return; break;
+        case 0b011: SelectedUser = 0; Serial.println(F("[Option 1] Selected default region")); break;
+        case 0b101: SelectedUser = 2; Serial.println(F("[Option 2] User2 selected")); break;
+        case 0b110: SelectedUser = 3; Serial.println(F("[Option 3] User3 selected")); break;
+        case 0b111: SelectedUser = 1; Serial.println(F("No option selected, User1 selected")); break;
+        default: SelectedUser = 1; flashslowLEDx(FLASH_SLOW_WARNING); Serial.println(F("Unconfigured option, User1 selected and aborting transmission..")); return; break;
       }
     }
     else
@@ -366,7 +409,7 @@ void loop() {
     TCommand = false;
 
     delay(500);
-    EEPROM.put(INFO_NUMBER_OF_STARTS_ADDR, ++NumberOfStarts);
+    EEPROM.update(INFO_NUMBER_OF_STARTS_ADDR, ++NumberOfStarts);
     Serial.println(F("Starting transmission of all codes"));
     SendAllCodes();
     Serial.println(F("Sending complete"));
@@ -393,6 +436,9 @@ void ReadFromEEPROM(){
   EEPROM.get(INFO_HARDWARE_VERSION_ADDR, HardwareVersion);
   EEPROM.get(INFO_NUMBER_OF_BOOTS_ADDR, NumberOfBoots);
   EEPROM.get(INFO_NUMBER_OF_STARTS_ADDR, NumberOfStarts);
+  EEPROM.get(INFO_STAT_PWM_BRIGHTNESS_ADDR, STAT_LED_PWM_Brightness);
+  //WriteUSBSerialToEEPROM("00000001");
+  USBSerialNumber = ReadUSBSerialFromEEPROM();
 }
 
 /**
@@ -457,11 +503,13 @@ void SendData()
   Serial.print(F(",\"SLEEP_OVERRIDE\":")); Serial.print(SleepOverride, DEC);
   
   Serial.print(F(",\"SERIAL_NUMBER\":")); Serial.print(Serial_Number, DEC);
-  Serial.print(F(",\"REFERENCE_1V1_VOLTAGE\":")); Serial.print(Ref_1V1_Voltage, DEC);
+  Serial.print(F(",\"USB_SERIAL_NUM\":\"")); Serial.print(USBSerialNumber);
+  Serial.print(F("\",\"REFERENCE_1V1_VOLTAGE\":")); Serial.print(Ref_1V1_Voltage, DEC);
   Serial.print(F(",\"FIRMWARE_VERSION\":\"")); Serial.print(F(FIRMWARE_VERSION_STR));
-  Serial.print(F("\",\"HARDWARE_VERSION\":")); Serial.print(HardwareVersion);
+  Serial.print(F("\",\"HARDWARE_VERSION\":\"")); Serial.print(HardwareVersion);
   Serial.print(F("\",\"NUM_OF_BOOTS\":")); Serial.print(NumberOfBoots, DEC);
-  Serial.print(F("\",\"NUM_OF_STARTS\":")); Serial.print(NumberOfStarts, DEC);
+  Serial.print(F(",\"NUM_OF_STARTS\":")); Serial.print(NumberOfStarts, DEC);
+  Serial.print(F(",\"STAT_PWM\":")); Serial.print(STAT_LED_PWM_Brightness, DEC);
   
   Serial.print(F(",\"REGION\":")); Serial.print(Region, DEC);
   Serial.print(F(",\"BOOT_REGION\":")); Serial.print(Boot_Region, DEC);
@@ -599,8 +647,12 @@ void SendAllCodes()
       repeatNLoop:
       Watchdog_Reset_DBG();
       Serial.println();
-      Serial.println(F("Waiting for next [N] command to continue to next code"));
-      
+      Serial.print(F("Waiting for next [N] command to continue to next code. Current ID: "));
+      Serial.print(i); Serial.print(F(" of ")); Serial.println(num_codes);
+      Serial.println(F("To skip to specific ID enter the ID as positive integer:"));
+      Serial.println();
+      repeatNLoopWrongID:
+      Watchdog_Reset_DBG();
       SerialFlush();
       
       PrintDBG(F("Wait for serial in"));
@@ -609,10 +661,28 @@ void SendAllCodes()
       #ifndef DISABLE_DEBUG_SAVE_SPACE
       PrintDBG(F("Serial rx buff check"));
       #endif
-      if(Serial.available() > 1) { Serial.println(F("Too much serial data received")); goto repeatNLoop; }
-      if(Serial.available() == 1)
+      int availableCount = Serial.available();
+      int parsedID = 0;
+      if(availableCount > 1) // parsing ID
       {
-        char tempReadNLoop = Serial.read();
+         tryParseID:
+         parsedID = Serial.parseInt(SKIP_NONE);
+         if(parsedID <= 0) 
+         { 
+           Serial.println();
+           if(availableCount == 1) Serial.println(F("Only [N],[S] command or ID as positive integer can be accepted"));
+           else Serial.println(F("[ERR]: Expected ID as positive integer")); 
+           goto repeatNLoop; 
+         }
+         if(parsedID > num_codes) { Serial.print(F("[ERR]: Max ID is ")); Serial.println(num_codes); goto repeatNLoopWrongID; }
+         i = parsedID-1;
+         Serial.print(F("ID set to: ")); Serial.println(i+1);
+         goto transmitCode;
+      }
+
+      if(availableCount == 1)
+      {
+        char tempReadNLoop = Serial.peek();
         #ifndef DISABLE_DEBUG_SAVE_SPACE
         PrintDBG(F("Serial rx char check"));
         #endif
@@ -621,13 +691,12 @@ void SendAllCodes()
           endingEarly = true;
           Serial.println(F("[S] issued. Breaking transmission loop")); break;
         }
-        else if(tempReadNLoop != 'N')
-        {
-          Serial.println(F("Only [N] command can be accepted")); goto repeatNLoop; 
-        }
+        else if(tempReadNLoop == 'N') goto transmitCode;
+        else goto tryParseID;
       }
     }
 
+    transmitCode:
     if(Debug_EN) Serial.println(); 
     
     Serial.print(F("Transmitting code ")); Serial.print(i+1, DEC); Serial.print(F(" of ")); Serial.println(num_codes);
@@ -995,9 +1064,11 @@ void ShowInfo(bool debug)
   Serial.println(F("True"));
   #endif
   Serial.print(F("  - [Serial Number]: ")); Serial.println(Serial_Number, DEC);
+  Serial.print(F("  - [USB Serial Number]: ")); Serial.println(USBSerialNumber);
   Serial.print(F("  - [Stored Reference 1.1V]: ")); Serial.print(Ref_1V1_Voltage, DEC); Serial.println(F("mV"));
   Serial.print(F("  - [Boots]: ")); Serial.println(NumberOfBoots, DEC);
   Serial.print(F("  - [Starts]: ")); Serial.println(NumberOfStarts, DEC);
+  Serial.print(F("  - [STAT PWM]: ")); Serial.println(STAT_LED_PWM_Brightness, DEC);
   Serial.print(F("  - [Boot Debug Setting]: ")); PrintLnEnabledDisabled(Boot_Debug_EN);
   Serial.print(F("  - [Boot Region Setting]: ")); Serial.println(Boot_Region, DEC);
   Serial.print(F("  - [Debug Override]: ")); PrintLnEnabledDisabled(Debug_Override);
@@ -1034,6 +1105,7 @@ void ShowInfo(bool debug)
   Serial.println(F("  - [N] Execute [T] command and wait for [N] command per IR code"));
   Serial.println(F("  - [D] Debug Enable/Disable"));
   Serial.println(F("  - [Q] Query for json data"));
+  Serial.println(F("  - [P] Set STAT LED PWM value"));
   Serial.println(F("  - [I] Print this content"));
   Serial.println();
   Debug_EN = oldDebug;
@@ -1044,8 +1116,11 @@ void ShowInfo(bool debug)
   Flashes STAT led for 30ms
 */
 void quickflashLED( void ) {
-  digitalWrite(STAT_LED, HIGH);
+  //digitalWrite(STAT_LED, HIGH);
+  PalatisSoftPWM.set(0, STAT_LED_PWM_Brightness);
   delay(30);
+  PalatisSoftPWM.set(0, 0);
+  delay(10);
   digitalWrite(STAT_LED, LOW);
 }
 
@@ -1059,11 +1134,13 @@ void flashslowLEDx( uint8_t num_blinks )
   uint8_t i;
   for(i=0;i<num_blinks;i++)
     {
-      digitalWrite(STAT_LED, HIGH);  
+      //digitalWrite(STAT_LED, HIGH);  
+      PalatisSoftPWM.set(0, STAT_LED_PWM_Brightness);
       delay(500);
       wdt_reset();
-      digitalWrite(STAT_LED, LOW);         
+      PalatisSoftPWM.set(0, 0);         
       delay(500);
+      digitalWrite(STAT_LED, LOW);
       wdt_reset();
     }
 }
@@ -1169,8 +1246,7 @@ void WakeUpNow()
 }
 
 /**
-  Checks if battery is low by measuring avcc. If it is low stat led will flash slow
-  FLASH_SLOW_LOW_BAT times.
+  Checks if battery is low by measuring avcc. If it is low stat led will fade down 2 times
 */
 void BatteryCheck()
 {
@@ -1181,8 +1257,18 @@ void BatteryCheck()
   long currentAVCC = MeasureAVCC();
   if (Low_Battery) 
   {
-    if(!SleepOverride) Serial.print(F("Battery is low, current AVcc = ")); Serial.print(currentAVCC, DEC); Serial.println(F("mV"));
-    flashslowLEDx(FLASH_SLOW_LOW_BAT);
+    if(!SleepOverride) { Serial.print(F("Battery is low, current AVcc = ")); Serial.print(currentAVCC, DEC); Serial.println(F("mV")); }
+    for(int i = 0; i < 2; i++)
+    {
+      for(byte i = STAT_LED_PWM_Brightness; i > 0; i--)
+      {
+        PalatisSoftPWM.set(0, i);
+        delay(750 / STAT_LED_PWM_Brightness);
+      }
+      PalatisSoftPWM.set(0, 0);
+      delay(250);
+      digitalWrite(STAT_LED, LOW);
+    }
   }
   #ifndef DISABLE_DEBUG_SAVE_SPACE
   else
@@ -1275,4 +1361,37 @@ long MeasureAVCC()
   if(Debug_EN) { PrintDBG(F("Battery low: "), false); Serial.println(Low_Battery ? F("Yes") : F("No")); }
   #endif
   return result;
+}
+
+/**
+  Writes USB Serial Number to EEPROM.
+
+  @param strToWrite String thats going to be written, must be INFO_USB_SERIAL_NUMBER_LEN chars
+  @return Amount of bytes written. If returned 0 then there are no bytes written or String is too short or too long.
+*/ 
+byte WriteUSBSerialToEEPROM(const String &strToWrite)
+{
+  if(strToWrite.length() != INFO_USB_SERIAL_NUMBER_LEN) return 0;
+  byte written = 0;
+  for (int i = 0; i < INFO_USB_SERIAL_NUMBER_LEN; i++)
+  {
+    EEPROM.write(INFO_USB_SERIAL_NUMBER_ADDR + i, strToWrite[i]);
+    written++;
+  }
+  return written;
+}
+
+/**
+  Reads USB Serial Number from EEPROM. 
+
+  @return String containing USB Serial Number
+*/ 
+String ReadUSBSerialFromEEPROM()
+{
+  char data[INFO_USB_SERIAL_NUMBER_LEN];
+  for (int i = 0; i < INFO_USB_SERIAL_NUMBER_LEN; i++)
+  {
+    data[i] = EEPROM.read(INFO_USB_SERIAL_NUMBER_ADDR + i);
+  }
+  return String(data);
 }

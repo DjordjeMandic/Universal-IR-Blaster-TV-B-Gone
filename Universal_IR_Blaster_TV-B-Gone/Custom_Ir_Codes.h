@@ -6,6 +6,7 @@
 #include "codes/Fox_TV_Power_Code.h"
 #include "codes/Mts_STB_Power_Code.h"
 #include "codes/Vox_TV_Power_Code.h"
+#include "codes/Blueberry_TV_Power_Code.h"
 
 #include "IrCodes_User1.h"
 #include "IrCodes_User2.h"

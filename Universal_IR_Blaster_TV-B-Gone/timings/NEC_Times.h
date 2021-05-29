@@ -9,6 +9,8 @@
 #define NEC_NUM_OF_PAIRS 34
 #define NEC_NUM_OF_BITS_PER_INDEX 2
 
+#define NEC_CARRIER_FREQ 38000
+
 /*
 ** INDEX #		    PWM ON		OFF
 ** 0 (LOGIC 0)	    0.56ms		0.56ms

@@ -8,6 +8,7 @@
 const IrCode* const User1Codes[] PROGMEM = {
   &code_FoxCode,
   &code_VoxCode,
+  &code_BlueberryCode,
   &code_MtsSTBCode,
   &code_DenverSTBCode,
   &code_AlphaCode
