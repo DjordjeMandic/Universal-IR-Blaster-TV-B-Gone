@@ -1,6 +1,6 @@
 # Universal IR Blaster TV-B-Gone [![Subscribe](https://img.shields.io/badge/Subscribe-YouTube-red)](https://www.youtube.com/channel/UCKv_SvHJWBPpDN_Mcyjr72A) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?color=blue)](https://paypal.me/DjordjeMandic)
  This is firmware for Universal IR Blaster board designed by me. You can say that with this firmware and that board you get
- TV-B-Gone on stereoids. Fully Arduino compatible board with bootloader.
+ TV-B-Gone on steroids. Fully Arduino compatible board with bootloader.
 
  <img src="Photos/UIRBV02Front.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Front"> <img src="Photos/UIRBV02Back.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Back">
 
