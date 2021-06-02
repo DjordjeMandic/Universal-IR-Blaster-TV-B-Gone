@@ -7,7 +7,7 @@
  ## Getting started
  You will need the following:
   - [Arduino IDE](https://www.arduino.cc/en/software) 1.8.13 and up
-  - [Arduino MiniCore](https://github.com/MCUdude/MiniCore) 2.0.9 and up
+  - [Arduino MiniCore](https://github.com/MCUdude/MiniCore) 2.1.2 and up
   - [CP210x USB to UART Bridge VCP Drivers](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
   - Copy of this repository on your computer
   - Universal IR Blaster board or hardware compatible equivalent
@@ -49,16 +49,19 @@
   - Codes are decompressed into 1kB buffer in RAM before actually emitting code elements for better 'off' time accuracy
   - Charging current and supply voltage can be monitored
   - STAT LED blinking every 2 seconds if sleep mode is disabled (overriden)
+  - STAT LED brightness controllable using [PalatisSoftPWM by per1234 & Palatis](https://github.com/per1234/PalatisSoftPWM)
+  - Low Battery indication via STAT LED fading out 2 times
 
  ## Serial Port Control
- Here is example of few commands and how to use them at 115200 baud rate:
+ Here is example of few commands and how to use them at `1000000 (1M BAUD)` baud rate:
   - Numbers 0 to 3 set the current selected user. 0 is default region code list hardcoded in firmware, 1 to 3 are users 1 to 3 respectively
-  - 'T' is the same as holding the WAKE button but option switches will be ignored for user selection and selected user will be used
-  - 'S' stops the transmission of codes
-  - 'N' will start transmission and wait for next N before sending each code. Useful for development and testing each code
-  - 'I' prints out information menu
-  - 'D' enables or disables debug mode. Debug mode is just a more text printed to serial console during the firmware's operation. Code traceing basically
-  - 'Q' measures IPROG and AVCC, does calcuations, samples some registers and ram data, spits it out in JSON format
+  - `[T]` is the same as holding the WAKE button but option switches will be ignored for user selection and selected user will be used
+  - `[S]` stops the transmission of codes
+  - `[N]` will start transmission and wait for next N before sending each code. Also code ID can be entered to skip to specific code right away. Useful for development and testing each code
+  - `[I]` prints out information menu
+  - `[P]` Sets PWM value `[1-255]` for STAT LED
+  - `[D]` enables or disables debug mode. Debug mode is just a more text printed to serial console during the firmware's operation. Code traceing basically
+  - `[Q]` measures IPROG and AVCC, does calcuations, samples some registers and ram data, spits it out in JSON format
 
 Be careful because only upper case letters are accepted. Control via serial port is a big feature for me because it allows me to use USB-OTG cable and hide the Universal IR Blaster while actually using it. Something like a ESP8266Deauther.
 
@@ -76,6 +79,7 @@ Be careful because only upper case letters are accepted. Control via serial port
   - Ken Shirriff
   - Fabriel Staples
   - Djordje Mandic
+  - per1234 & Palatis
 
  ## License
  This code in written under Distributed under Creative Commons 2.5 -- Attribution & Share Alike license. Check out `License And Changes.txt` for more information.

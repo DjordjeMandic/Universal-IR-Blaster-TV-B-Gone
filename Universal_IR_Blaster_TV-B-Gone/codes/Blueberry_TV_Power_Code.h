@@ -4,7 +4,7 @@
 #include "../main.h"
 #include "../timings/NEC_Times.h"
 
-#define CODE_BLUEBERRY_FREQ NEC_CARRIER_FREQ
+#define CODE_BLUEBERRY_FREQ 38000
 
 const uint8_t code_BlueberryCodes[] PROGMEM = {
     0x80,

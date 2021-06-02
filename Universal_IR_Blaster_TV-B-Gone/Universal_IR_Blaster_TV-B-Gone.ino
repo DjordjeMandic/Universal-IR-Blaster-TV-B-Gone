@@ -87,7 +87,7 @@ String USBSerialNumber = "ERR";
 
 #define DEVELOPMENT 0 // if 1 then just timings are printed out and no code is actually transmitted
 //#define DISABLE_DEBUG_SAVE_SPACE // uncomment this if you want to disable few debug messages if youre low on flash
-#define FIRMWARE_VERSION_STR "1.5" // string firmware version 
+#define FIRMWARE_VERSION_STR "1.5.1" // string firmware version 
 #define HARDWARE_VERSION_CMP 0.2 // double hardware version x.x thats checked againt value stored in eeprom
 #define SERIAL_BAUD_RATE 1000000
 

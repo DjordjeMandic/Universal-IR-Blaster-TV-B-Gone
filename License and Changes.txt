@@ -1,4 +1,30 @@
-Last Updated: 23 February 2021
+Last Updated: 2 June 2021
+by Djordje Mandic https://github.com/DjordjeMandic https://youtube.com/c/ncky
+
+Universal IR Blaster TV-B-Gone V1.5.1:
+Added LG, D3Mini, Tesla Codes and RCA timings.
+Changed sequence of User1 codes.
+
+Universal IR Blaster TV-B-Gone V1.5:
+
+Added option to control brightness of STAT LED in Software PWM mode. (https://github.com/per1234/PalatisSoftPWM)
+Added USB Serial Number to EEPROM and Info screen / data query.
+Low Battery is now indicated by stat led fading away 2 times from maximum set brightness to off.
+Changed default selected user from region codes to User1.
+Hardware version mismatch watchdog timeout increased to 2 seconds.
+Baud rate increased from 115200 to 1000000(1M) due to error at 115200. No error at 1M on both sides.
+Wake button now selects User1 instead of region codes.
+Option SW1 + Wake selects region codes.
+Option SW2 + Wake selects User2 codes.
+Option SW3 + Wake selects User3 codes.
+Option SW1 during boot overrides sleep mode. Was debug mode before.
+Option SW2 during boot overrides debug mode. Was sleep before.
+Added P command used to set PWM value for STAT led.
+Added option to specify code id in list to transmit when in N command mode.
+Fixed a typo in JSON data formatting.
+Added Blueberry TV Power Code to database and to User1 List.
+Compiled with MiniCore 2.1.2
+
 by Djordje Mandic https://github.com/DjordjeMandic https://youtube.com/c/ncky
 
 Universal IR Blaster TV-B-Gone V1.4:
@@ -21,7 +47,6 @@ Added Serial communication with user for control and information gathering
 Firmware only compatibale with Universal IR Blaster V0.2 board
 Changed actual use of firmware for Universal IR Blaster V0.2 board
 Ported to Universal IR Blaster V0.2 Board
-
 
 by Djordje Mandic https://github.com/DjordjeMandic https://youtube.com/c/ncky
 -----------------------------------------------------------------------------
