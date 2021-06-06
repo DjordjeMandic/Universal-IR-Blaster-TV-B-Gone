@@ -2,7 +2,7 @@
  This is firmware for Universal IR Blaster board designed by me. You can say that with this firmware and that board you get
  TV-B-Gone on steroids. Fully Arduino compatible board with bootloader.
 
- <img src="Photos/UIRBV02Front.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Front"> <img src="Photos/UIRBV02Back.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Back">
+ <img src="Photos/UIRBV02Front.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Front"> <img src="Photos/UIRBV02Back.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Back"> <img src="Photos/UIRBV02FrontWBat.jpg" width="365" height="487" alt="Universal IR Blaster V0.2 Front With Battery"> <img src="Photos/UIRBV02SideWBat.jpg" width="365" height="487" alt="Universal IR Blaster V0.2 Side With Battery">
 
  ## Getting started
  You will need the following:
