@@ -1,5 +1,9 @@
-Last Updated: 2 June 2021
+Last Updated: 26 July 2021
 by Djordje Mandic https://github.com/DjordjeMandic https://youtube.com/c/ncky
+
+Universal IR Blaster TV-B-Gone V1.5.2:
+Fixed Number of boots and starts overflow
+Added option to write eeprom defaults
 
 Universal IR Blaster TV-B-Gone V1.5.1:
 Added LG, D3Mini, Tesla Codes and RCA timings.
