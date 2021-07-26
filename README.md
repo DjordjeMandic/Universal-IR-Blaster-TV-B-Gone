@@ -7,7 +7,7 @@
  ## Getting started
  You will need the following:
   - [Arduino IDE](https://www.arduino.cc/en/software) 1.8.13 and up
-  - [Arduino MiniCore](https://github.com/MCUdude/MiniCore) 2.1.2 and up
+  - [Arduino MiniCore](https://github.com/MCUdude/MiniCore) 2.1.3 and up
   - [CP210x USB to UART Bridge VCP Drivers](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
   - Copy of this repository on your computer
   - Universal IR Blaster board or hardware compatible equivalent
