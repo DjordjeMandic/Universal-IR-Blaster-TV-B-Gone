@@ -24,6 +24,13 @@
 #undef LED_BUILTIN
 #define LED_BUILTIN STAT_LED
 
+/*
+ * If the chip is brand new or this firmware has never been flashed on target uncomment this below
+ * After flashing this firmware with that uncommented then comment it out and flash again
+ */
+
+//#define FIRST_WRITE
+
 #include "main.h"
 #include "WORLD_IR_CODES.h"
 #include <avr/sleep.h>
@@ -87,7 +94,7 @@ String USBSerialNumber = "ERR";
 
 #define DEVELOPMENT 0 // if 1 then just timings are printed out and no code is actually transmitted
 //#define DISABLE_DEBUG_SAVE_SPACE // uncomment this if you want to disable few debug messages if youre low on flash
-#define FIRMWARE_VERSION_STR "1.5.1" // string firmware version 
+#define FIRMWARE_VERSION_STR "1.5.2" // string firmware version 
 #define HARDWARE_VERSION_CMP 0.2 // double hardware version x.x thats checked againt value stored in eeprom
 #define SERIAL_BAUD_RATE 1000000
 
@@ -149,7 +156,7 @@ void setup() {
   //if hardware version defined in software does not match hardware version stored in eeprom then do a WDT reset
   if(HardwareVersion != HARDWARE_VERSION_CMP) { wdt_enable(WDTO_2S); while(1); } // if hardware version does not match restart to prevent damage to hardware
   
-  EEPROM.update(INFO_NUMBER_OF_BOOTS_ADDR, ++NumberOfBoots);
+  EEPROM.put(INFO_NUMBER_OF_BOOTS_ADDR, ++NumberOfBoots);
 
   digitalWrite(IR_SIG, LOW); pinMode(IR_SIG, OUTPUT);
   pinMode(USB_IO3, INPUT_PULLUP);
@@ -348,7 +355,7 @@ void loop() {
       Boot_Debug_EN = true;
     }
     Serial.println(F("Saving debug mode in EEPROM"));
-    EEPROM.update(INFO_DEBUG_ENABLED_EEPROM_ADDR, Boot_Debug_EN);
+    EEPROM.put(INFO_DEBUG_ENABLED_EEPROM_ADDR, Boot_Debug_EN);
     Serial.println(F("Debug mode saved"));
   }
 
@@ -363,7 +370,7 @@ void loop() {
     int parsedPWM = Serial.parseInt(SKIP_NONE);
     if(parsedPWM >= 1 && parsedPWM <= 255)
     {
-      EEPROM.update(INFO_STAT_PWM_BRIGHTNESS_ADDR, (byte)parsedPWM);
+      EEPROM.put(INFO_STAT_PWM_BRIGHTNESS_ADDR, (byte)parsedPWM);
     }
     
     EEPROM.get(INFO_STAT_PWM_BRIGHTNESS_ADDR, STAT_LED_PWM_Brightness);
@@ -409,7 +416,7 @@ void loop() {
     TCommand = false;
 
     delay(500);
-    EEPROM.update(INFO_NUMBER_OF_STARTS_ADDR, ++NumberOfStarts);
+    EEPROM.put(INFO_NUMBER_OF_STARTS_ADDR, ++NumberOfStarts);
     Serial.println(F("Starting transmission of all codes"));
     SendAllCodes();
     Serial.println(F("Sending complete"));
@@ -428,6 +435,18 @@ void loop() {
   Number Of Starts
 */
 void ReadFromEEPROM(){
+#ifdef FIRST_WRITE
+  EEPROM.put(INFO_SERIAL_NUMBER_EEPROM_ADDR, 2);
+  EEPROM.put(INFO_1V1_VOLTAGE_EEPROM_ADDR, 1074);
+  EEPROM.put(INFO_REGION_EEPROM_ADDR, 0);
+  
+  EEPROM.put(INFO_DEBUG_ENABLED_EEPROM_ADDR, false);
+  EEPROM.put(INFO_HARDWARE_VERSION_ADDR, 0.2);
+  EEPROM.put(INFO_NUMBER_OF_BOOTS_ADDR, 0UL);
+  EEPROM.put(INFO_NUMBER_OF_STARTS_ADDR, 0UL);
+  EEPROM.put(INFO_STAT_PWM_BRIGHTNESS_ADDR, 25);
+  WriteUSBSerialToEEPROM("00000001"); // must be 8 digits if chip is brand new, replace with your own value
+#endif
   EEPROM.get(INFO_SERIAL_NUMBER_EEPROM_ADDR, Serial_Number);
   EEPROM.get(INFO_1V1_VOLTAGE_EEPROM_ADDR, Ref_1V1_Voltage);
   EEPROM.get(INFO_REGION_EEPROM_ADDR, Boot_Region);
@@ -437,7 +456,6 @@ void ReadFromEEPROM(){
   EEPROM.get(INFO_NUMBER_OF_BOOTS_ADDR, NumberOfBoots);
   EEPROM.get(INFO_NUMBER_OF_STARTS_ADDR, NumberOfStarts);
   EEPROM.get(INFO_STAT_PWM_BRIGHTNESS_ADDR, STAT_LED_PWM_Brightness);
-  //WriteUSBSerialToEEPROM("00000001");
   USBSerialNumber = ReadUSBSerialFromEEPROM();
 }
 
