@@ -436,8 +436,8 @@ void loop() {
 */
 void ReadFromEEPROM(){
 #ifdef FIRST_WRITE
-  EEPROM.put(INFO_SERIAL_NUMBER_EEPROM_ADDR, 2);
-  EEPROM.put(INFO_1V1_VOLTAGE_EEPROM_ADDR, 1074);
+  EEPROM.put(INFO_SERIAL_NUMBER_EEPROM_ADDR, 5);
+  EEPROM.put(INFO_1V1_VOLTAGE_EEPROM_ADDR, 1082);
   EEPROM.put(INFO_REGION_EEPROM_ADDR, 0);
   
   EEPROM.put(INFO_DEBUG_ENABLED_EEPROM_ADDR, false);
@@ -445,7 +445,7 @@ void ReadFromEEPROM(){
   EEPROM.put(INFO_NUMBER_OF_BOOTS_ADDR, 0UL);
   EEPROM.put(INFO_NUMBER_OF_STARTS_ADDR, 0UL);
   EEPROM.put(INFO_STAT_PWM_BRIGHTNESS_ADDR, 25);
-  WriteUSBSerialToEEPROM("00000001"); // must be 8 digits if chip is brand new, replace with your own value
+  WriteUSBSerialToEEPROM("02228761"); // must be 8 chars if chip is brand new, replace with your own value
 #endif
   EEPROM.get(INFO_SERIAL_NUMBER_EEPROM_ADDR, Serial_Number);
   EEPROM.get(INFO_1V1_VOLTAGE_EEPROM_ADDR, Ref_1V1_Voltage);

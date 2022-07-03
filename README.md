@@ -1,6 +1,7 @@
 # Universal IR Blaster TV-B-Gone [![Subscribe](https://img.shields.io/badge/Subscribe-YouTube-red)](https://www.youtube.com/channel/UCKv_SvHJWBPpDN_Mcyjr72A) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg?color=blue)](https://paypal.me/DjordjeMandic)
  This is firmware for Universal IR Blaster board designed by me. You can say that with this firmware and that board you get
  TV-B-Gone on steroids. Fully Arduino compatible board with bootloader.
+ Schematic diagram of the board is available [here](Schematic/Universal%20IR%20Blaster%20V0.2%20(2045)%20Schematic.pdf).
 
  <img src="Photos/UIRBV02Front.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Front"> <img src="Photos/UIRBV02Back.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Back"> <img src="Photos/UIRBV02FrontWBat.jpg" width="365" height="487" alt="Universal IR Blaster V0.2 Front With Battery"> <img src="Photos/UIRBV02SideWBat.jpg" width="365" height="487" alt="Universal IR Blaster V0.2 Side With Battery">
 
@@ -68,7 +69,7 @@ Be careful because only upper case letters are accepted. Control via serial port
  ## Ideas 
   - USB host can read and control CP2104 GPIO state so that we can have info if battery is charging or not. Also USB host can override sleep mode on ATmega328P and turn it off by holding GPIO3 of CP2104 during the reset of ATmega328P which is also possible via DTR line. After ATmega328P has sleep mode disabled (overriden) we can use GPIO3(open-drain) and PD4 for direct communication between host and ATmega328P.
   - USB host side program or Android app can be made to have nice GUI for control of the Universal IR Blaster. Data can be queried only while codes are not transmitted for now. We could implement that after setup is done the PD4 will wait with PULLUP for GPIO3 to pull that pin low to request JSON data.
-  - Nice case can be 3D printed but I do not own 3D printer nor I have the creativity do design one.
+  - Nice case can be 3D printed but I do not own 3D printer nor I have the creativity to design one.
 
  ## Acknowledgements
   - Mitch Altman
