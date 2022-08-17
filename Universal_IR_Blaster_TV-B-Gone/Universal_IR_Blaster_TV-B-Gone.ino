@@ -94,7 +94,7 @@ String USBSerialNumber = "ERR";
 
 #define DEVELOPMENT 0 // if 1 then just timings are printed out and no code is actually transmitted
 //#define DISABLE_DEBUG_SAVE_SPACE // uncomment this if you want to disable few debug messages if youre low on flash
-#define FIRMWARE_VERSION_STR "1.5.2" // string firmware version 
+#define FIRMWARE_VERSION_STR "1.5.3" // string firmware version 
 #define HARDWARE_VERSION_CMP 0.2 // double hardware version x.x thats checked againt value stored in eeprom
 #define SERIAL_BAUD_RATE 1000000
 
@@ -115,7 +115,7 @@ extern uint8_t num_NAcodes, num_EUcodes, num_User1Codes, num_User2Codes, num_Use
 
 volatile uint16_t TimingPairsBuffer[256][2];
 
-byte SelectedUser = 1;
+byte SelectedUser = 0;
 
 uint8_t bitsleft_r = 0;
 uint8_t bits_r=0;
@@ -180,13 +180,35 @@ void setup() {
   TCCR2A = 0;
   TCCR2B = 0;
   wdt_disable();
-  PalatisSoftPWM.begin(60);
-
-  //region from eeprom, we should try not to change boot variables in code unless were reading it from eeprom
-  Region = Boot_Region;
   
   Serial.begin(SERIAL_BAUD_RATE);
   Serial.setTimeout(200);
+
+  byte regionSwitchCondition = 0 | (digitalRead(WAKE) << 3) | (digitalRead(OPTION_SW1) << 2) | (digitalRead(OPTION_SW2) << 1) | digitalRead(OPTION_SW3);
+  if(regionSwitchCondition == 0)
+  {
+    if(Boot_Region == NA) EEPROM.update(INFO_REGION_EEPROM_ADDR, EU);
+    else if(Boot_Region == EU) EEPROM.update(INFO_REGION_EEPROM_ADDR, NA);
+    else
+    {
+      EEPROM.update(INFO_REGION_EEPROM_ADDR, DEFAULT_REGION);
+      Serial.println(F("Error"));
+    }
+    EEPROM.get(INFO_REGION_EEPROM_ADDR, Boot_Region);
+    digitalWrite(STAT_LED, HIGH);
+    while(1)
+    {
+      Serial.println();
+      Serial.print(F("Region changed: ")); Serial.println(Boot_Region, DEC);
+      Serial.println(F("Please reboot"));
+      delay(1000);
+    }
+  }
+  
+  PalatisSoftPWM.begin(60);  
+
+  //region from eeprom, we should try not to change boot variables in code unless were reading it from eeprom
+  Region = Boot_Region;
 
   //check if option sw2 is held while booting and if yes then enable debug and set debug override flag to true if not then set debug to state from eeprom
   if(digitalRead(OPTION_SW2) == 0)
@@ -215,7 +237,7 @@ void setup() {
                                       break;
   }
   
-  SelectedUser = 1; // default User1 codes
+  SelectedUser = 0; // default Region codes
   NumOfCodes = Region ? num_EUcodes : num_NAcodes;
 
   //if cp2104 gpio3 is held low while booting then enable sleep override
@@ -401,11 +423,11 @@ void loop() {
       if(Debug_EN) { Serial.print(F("[DBG]: Selecting user codes, optionSW = 0b")); Serial.println(optionSW, BIN); }
       switch(optionSW)
       {
-        case 0b011: SelectedUser = 0; Serial.println(F("[Option 1] Selected default region")); break;
+        case 0b011: SelectedUser = 1; Serial.println(F("[Option 1] User1 selected")); break;
         case 0b101: SelectedUser = 2; Serial.println(F("[Option 2] User2 selected")); break;
         case 0b110: SelectedUser = 3; Serial.println(F("[Option 3] User3 selected")); break;
-        case 0b111: SelectedUser = 1; Serial.println(F("No option selected, User1 selected")); break;
-        default: SelectedUser = 1; flashslowLEDx(FLASH_SLOW_WARNING); Serial.println(F("Unconfigured option, User1 selected and aborting transmission..")); return; break;
+        case 0b111: SelectedUser = 0; Serial.println(F("No option selected, Region codes selected")); break;
+        default: SelectedUser = 0; flashslowLEDx(FLASH_SLOW_WARNING); Serial.println(F("Unconfigured option, Region codes selected and aborting transmission..")); return; break;
       }
     }
     else
@@ -436,16 +458,16 @@ void loop() {
 */
 void ReadFromEEPROM(){
 #ifdef FIRST_WRITE
-  EEPROM.put(INFO_SERIAL_NUMBER_EEPROM_ADDR, 5);
+  EEPROM.put(INFO_SERIAL_NUMBER_EEPROM_ADDR, 0);
   EEPROM.put(INFO_1V1_VOLTAGE_EEPROM_ADDR, 1082);
-  EEPROM.put(INFO_REGION_EEPROM_ADDR, 0);
+  EEPROM.put(INFO_REGION_EEPROM_ADDR, DEFAULT_REGION);
   
   EEPROM.put(INFO_DEBUG_ENABLED_EEPROM_ADDR, false);
   EEPROM.put(INFO_HARDWARE_VERSION_ADDR, 0.2);
   EEPROM.put(INFO_NUMBER_OF_BOOTS_ADDR, 0UL);
   EEPROM.put(INFO_NUMBER_OF_STARTS_ADDR, 0UL);
   EEPROM.put(INFO_STAT_PWM_BRIGHTNESS_ADDR, 25);
-  WriteUSBSerialToEEPROM("02228761"); // must be 8 chars if chip is brand new, replace with your own value
+  WriteUSBSerialToEEPROM("00000000"); // must be 8 chars if chip is brand new, replace with your own value
 #endif
   EEPROM.get(INFO_SERIAL_NUMBER_EEPROM_ADDR, Serial_Number);
   EEPROM.get(INFO_1V1_VOLTAGE_EEPROM_ADDR, Ref_1V1_Voltage);

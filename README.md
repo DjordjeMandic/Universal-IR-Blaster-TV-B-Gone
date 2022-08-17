@@ -53,6 +53,7 @@
   - STAT LED blinking every 2 seconds if sleep mode is disabled (overriden)
   - STAT LED brightness controllable using [PalatisSoftPWM by per1234 & Palatis](https://github.com/per1234/PalatisSoftPWM)
   - Low Battery indication via STAT LED fading out 2 times
+  - Region change on the fly
 
  ## Serial Port Control
  Here is example of few commands and how to use them at `1000000 (1M BAUD)` baud rate:

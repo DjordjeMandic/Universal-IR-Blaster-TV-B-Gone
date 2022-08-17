@@ -8,7 +8,7 @@
 
 #define EU 1 // 1 for Europe, 0 for North America
 #define NA 0
-#define DEFAULT_REGION EU
+#define DEFAULT_REGION NA
 
 // Lets us calculate the size of the NA/EU databases
 #define NUM_ELEM(x) (sizeof (x) / sizeof (*(x)));
