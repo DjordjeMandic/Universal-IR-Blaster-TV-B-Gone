@@ -73,6 +73,9 @@ Be careful because only upper case letters are accepted. Control via serial port
   - USB host side program or Android app can be made to have nice GUI for control of the Universal IR Blaster. Data can be queried only while codes are not transmitted for now. We could implement that after setup is done the PD4 will wait with PULLUP for GPIO3 to pull that pin low to request JSON data.
   - Nice case can be 3D printed but I do not own 3D printer nor I have the creativity to design one.
 
+ ## Some other projects with this board
+  - [GirsUIRB - Girs infrared server optimized for IrScrutinizer and LIRC ](https://github.com/DjordjeMandic/GirsUIRB)
+
  ## Acknowledgements
   - Mitch Altman
   - Limor Fried
