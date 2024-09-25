@@ -4,7 +4,11 @@
  Schematic diagram of the board is available [here](Schematic/Universal%20IR%20Blaster%20V0.2%20(2045)%20Schematic.pdf).
  3D Model of the board is available [here](3D%20Model/Universal%20IR%20Blaster%20V0.2%203D%20Model/)
 
- <img src="Photos/UIRBV02Front.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Front"> <img src="Photos/UIRBV02Back.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Back"> <img src="Photos/UIRBV02FrontWBat.jpg" width="365" height="487" alt="Universal IR Blaster V0.2 Front With Battery"> <img src="Photos/UIRBV02SideWBat.jpg" width="365" height="487" alt="Universal IR Blaster V0.2 Side With Battery">
+ ### Block Diagram
+ <img src="Schematic/BlockDiagramWithParts.svg" alt="Universal IR Blaster V0.2 Block Diagram"> 
+
+ ### Actual PCB
+ <img src="Photos/UIRBV02Front.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Front"> <img src="Photos/UIRBV02Back.jpg" width="256" height="487" alt="Universal IR Blaster V0.2 Back"> 
 
  ## Getting started
  You will need the following:
